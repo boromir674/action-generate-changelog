@@ -1,0 +1,105 @@
+name: Test expected content is returned, when Categories supplied as Action Input
+on:
+  workflow_call:
+    inputs:
+      test_matrix:
+        description: 'JSON Object like {"test_data": [{...}]}; the Job Matrix: A JSON object of key (factors) mapping to arrays (of test cases to run).'
+        required: true
+        type: string
+jobs:
+  test_job_matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJSON(inputs.test_matrix) }}
+    env:
+      TEST_MAIN: main
+      TEST_REPO: 'boromir674/gitops-automation'
+      _BRANCH: "emulated-feature-branch-${{ github.run_id }}"
+      # Design of Expected Groups leverages a json array of objects
+      # implicit convertion to string, by serializing inner json array representation
+      EXPECTED_COMMITS_GROUPS: ${{ toJSON(matrix.test_data.expected_groups) }}
+      # implicit convertion to string, by serializing inner json array representation
+      COMMITS_JSON_ARRAY_SERIALIZED: ${{ toJSON(matrix.test_data.action_inputs.commits) }}
+    steps:
+      # GIVEN a list of Commits (Subject text), as JSON array of strings
+      - name: Print Test Case Data, from evaluated Input JSON Object
+        run: |
+          echo 'Commits: ${{ toJSON(matrix.test_data.action_inputs.commits) }}'
+          echo 'Format: ${{ matrix.test_data.action_inputs.output_format }}'
+          echo 'Categories: ${{ matrix.test_data.action_inputs.categories }}'
+          echo 'Expected Groups: ${{ matrix.test_data.expected_groups }}'
+
+      # GIVEN a git repository locally checked out
+      - name: Checkout '${{ env.TEST_REPO }}' Compatible Repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.TEST_REPO }}
+          ref: ${{ env.TEST_MAIN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+        # GIVEN a the requested output_format is 'MD'. for Markdown
+        # GIVEN the User requested to get grouped output
+        # GIVEN the User supply their Categories as Action Input
+      # WHEN the Action runs
+      - name: WHEN Action Runs, with Categories supplied as Input
+        id: run_action
+        uses: boromir674/action-generate-changelog@dev
+        with:
+          commits: ${{ env.COMMITS_JSON_ARRAY_SERIALIZED }}
+          output_format: '${{ matrix.test_data.action_inputs.output_format }}'
+          # group: ${{ matrix.test_data.action_inputs.group }}
+          categories: ${{ matrix.test_data.action_inputs.categories }}
+
+      - name: IF 'MD' is requested, convert the Expected Groups from JSON Array of Objects to Markdown
+        if: ${{ matrix.test_data.action_inputs.output_format == 'MD' }}
+        run: |
+          # keep 'markdown_section_name' (str) and 'commits' (array of strings) keys from Expected array of objects
+          expected_content=$(echo "${EXPECTED_COMMITS_GROUPS}" | jq -c '[.[] | {markdown_section_name: .markdown_section_name, commits: .commits}]')
+
+          echo "[DEBUG] $(echo ${expected_content} | jq)"
+          echo
+
+          # Convert to Markdown like
+          # ## Section Name
+          # - commit 1
+          # - commit 2
+          # ...
+          # EXPECTED_MARKDOWN_CONTENT=$(echo "${expected_content}" | jq -r 'map("## \(.markdown_section_name)\n\(.commits | map("- \(.)) | join("\n")) | join("\n\n")')
+
+          EXPECTED_MARKDOWN_CONTENT=$(echo "${expected_content}" | jq -r 'map("## \(.markdown_section_name)\n\(.commits | map("- \(.)") | join("\n"))") | join("\n\n")')
+
+          echo "[DEBUG] EXPECTED_MARKDOWN_CONTENT:"
+          echo ${EXPECTED_MARKDOWN_CONTENT}
+
+          # Store the multi-line markdown content in a GitHub environment variable
+          echo "EXPECTED_MARKDOWN_CONTENT<<EOF" >> $GITHUB_ENV
+          echo "${EXPECTED_MARKDOWN_CONTENT}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          # echo EXPECTED_MARKDOWN_CONTENT="${EXPECTED_MARKDOWN_CONTENT}" >> $GITHUB_ENV
+
+      # THEN the Action should return the expected Markdown content
+      # jq --exit-status --argjson expected "${EXPECTED_COMMITS_GROUPS}" '$expected == .' <<< ${{ toJSON(steps.run_action.outputs.conten) }}
+      
+      - name: ASSERT Expected Markdown is returned
+        env:
+          # implicit convertion to string, by serializing inner json array representation
+          EXPECTED_COMMITS_GROUPS: ${{ toJSON(matrix.test_data.expected_groups) }}
+        run: |
+          if [ "${{ steps.run_action.outputs.content }}" = "${EXPECTED_MARKDOWN_CONTENT}" ]; then
+            echo "Action Return Value is as expected."
+          else
+            echo "Action Return Value is NOT as expected."
+            exit 1
+          fi
+
+      - name: Print Runtime and Expected for sanity check
+        if: always()
+        run: |
+          echo "[DEBUG] Runtime RAW Output:"
+          echo '${{ steps.run_action.outputs.content }}'
+          echo
+
+          echo "[DEBUG] Expected Output:"
+          echo "${{ matrix.test_data.action_inputs.output_format == 'MD' && env.EXPECTED_MARKDOWN_CONTENT || env.EXPECTED_COMMITS_GROUPS }}"

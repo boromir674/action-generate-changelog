@@ -1,0 +1,174 @@
+# Continuous Integration / Continuous Delivery
+name: CI/CD Pipeline
+on:
+  push:
+    branches:
+      - "*"
+      # do not do CI on 'release' and 'develop' branches
+      - '!release'
+      - '!develop'
+    tags:
+      - v*.*.*
+env:
+  ##### JOB ON/OFF SWITCHES - Top/1st level overrides #####
+  RUN_UNIT_TESTS: "true"
+  DOCS_ON: "true"
+  ###############################
+
+  #### DOCS Build/Test ####
+  ALWAYS_DOCS: "false"
+  DOCS_JOB_POLICY: '2'  # {2, 3}
+  DOCS_BUILDER_RUNTIME: "3.10"
+  ##########################
+
+jobs:
+  ### TEST Action returns 'true' in Rule-passing End-2-End Scenarios ###
+  test:
+    if: vars.OVERRIDE_UNIT_TESTS == 'true' || vars.OVERRIDE_UNIT_TESTS != 'false'
+    uses: ./.github/workflows/_test.yml
+    with:
+      test_matrix: |
+        {
+          "test_data": [
+            {
+              "name": "Test expected Markdown is returned, when Categories are supplied as Action Input",
+              "action_inputs": {
+                "commits": [
+                  "feat: new feature",
+                  "fix: bug fix",
+                  "refactor: code refactor",
+                  "test: test",
+                  "build: build",
+                  "docs: docs",
+                  "ci: ci",
+                  "style: style",
+                  "chore: chore"
+                ],
+                "output_format": "MD",
+                "categories": "feat,fix,refactor,test,build,docs,ci,style,chore"
+              },
+              "expected_groups": [
+                {
+                  "category": "feat",
+                  "markdown_section_name": "Feature",
+                  "commits": [
+                    "feat: new feature"
+                  ]
+                },
+                {
+                  "category": "fix",
+                  "markdown_section_name": "Fix",
+                  "commits": [
+                    "fix: bug fix"
+                  ]
+                },
+                {
+                  "category": "refactor",
+                  "markdown_section_name": "Refactor",
+                  "commits": [
+                    "refactor: code refactor"
+                  ]
+                },
+                {
+                  "category": "test",
+                  "markdown_section_name": "Test",
+                  "commits": [
+                    "test: test"
+                  ]
+                },
+                {
+                  "category": "build",
+                  "markdown_section_name": "Build",
+                  "commits": [
+                    "build: build"
+                  ]
+                },
+                {
+                  "category": "docs",
+                  "markdown_section_name": "Documentation",
+                  "commits": [
+                    "docs: docs"
+                  ]
+                },
+                {
+                  "category": "ci",
+                  "markdown_section_name": "CI",
+                  "commits": [
+                    "ci: ci"
+                  ]
+                },
+                {
+                  "category": "style",
+                  "markdown_section_name": "Style",
+                  "commits": [
+                    "style: style"
+                  ]
+                },
+                {
+                  "category": "chore",
+                  "markdown_section_name": "Other",
+                  "commits": [
+                    "chore: chore"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+
+  ### DOCS BUILD/TEST - DOCUMENTATION SITE ###
+  docs:
+    # IF PIPE_DOCS_POLICY != 0, will trigger by processing rules in order till TRUE
+    # - run_policy == 1
+    # - push event on 'main' branch AND run_policy == 2
+    # - push event of "v*" tag AND run_policy == 2
+    # - Documentation Changes Detected
+    name: Build Documentation
+    uses: boromir674/automated-workflows/.github/workflows/policy_docs.yml@v1.13.1
+    with:
+      # 0: OFF, 1: Always, 2: Content Dynamic + Dedicated Branches, 3: Content Dynamic
+      run_policy: "${{ (vars.OVERRIDE_DOCS == 'false' && '0') || (vars.OVERRIDE_DOCS == 'true' && '1') || '2' }}"
+      python_version: '3.10'
+      dedicated_branches: 'main, release'  #  only relevant when policy = 2
+      command: 'tox -s false -e pin-deps -- -E docs && tox -e docs --sitepackages -vv -s false'
+
+  ### CI Checks - Quality Logic Gate ###
+  quality_gate:
+    # This Workflow implements both CI and CD, with its Jobs.
+    # So we put the Quality Gate for Dynamic Acceptance/Check here, which should be wired up to the CI Jobs.
+    if: always()
+    needs: ['test', 'docs']
+    uses: boromir674/automated-workflows/.github/workflows/go-single-status.yml@v1.13.1
+    with:
+      # leverage inputs to dynamically control the Acceptance Criteria
+      # by default all job.needs Jobs must be Green
+
+      # - This Gate can be used as an abstraction between CI and CD
+      # - This Gate can be used as an abstraction CI Checks and Branch Protection Rules.Required_Checks
+
+      # - dynamically add discovered skipped Jobs to the 'allowed-skips', on branch push
+      # - on tag push all needed Jobs must succeed for Gate to pass
+      allowed-skips: ${{ ( ! startsWith(github.event.ref, 'refs/tags/v') && needs.*.result == 'skipped') || '[]' }}
+      needs_json: ${{ toJSON(needs) }}  # should never change
+
+  ### CD Signal ###
+  signal_deploy:
+    needs: quality_gate
+    if: ${{ startsWith(github.event.ref, 'refs/tags/v') }}
+    uses: ./.github/workflows/_signal_deploy.yml
+    with:
+      main_branch: ${{ vars.GIT_MAIN_BRANCH || 'main' }}
+      release_branch: ${{ vars.GIT_RELEASE_BRANCH || 'release' }}
+
+  ### Make a Github Release ###
+  gh_release:
+    needs: signal_deploy
+    if: always() && ( vars.OVERRIDE_DEPLOY == 'true' || ( vars.OVERRIDE_DEPLOY != 'false' && needs.signal_deploy.outputs.AUTOMATED_DEPLOY == 'true' ) )
+    uses: boromir674/automated-workflows/.github/workflows/gh-release.yml@v1.13.1
+    name: 'GH Release'
+    with:
+      tag: ${{ github.ref_name }}
+      draft: ${{ needs.check_which_git_branch_we_are_on.outputs.ENVIRONMENT_NAME == 'TEST_DEPLOYMENT' }}
+    secrets:
+      # passing the GH_TOKEN PAT, to render in GH as ie: 'boromir674 released this yesterday', instead of 'github-actions released this yesterday'
+      gh_token: ${{ secrets.GH_TOKEN_CREATE_RELEASE }}
