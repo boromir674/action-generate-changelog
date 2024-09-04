@@ -27,6 +27,9 @@ outputs:
 
 runs:
   using: "composite"
+  env:
+    # implicit convertion to UNICODE string, by serializing inner JSON array representation
+    COMMITS_JSON_ARRAY_SERIALIZED: ${{ toJSON(inputs.commits) }}
   steps:
     # VERIFY INPUTS: commits is jq-parsable JSON array of strings
     - name: "VERIFY INPUTS: commits is jq-parsable JSON array of strings"
@@ -69,7 +72,7 @@ runs:
         COMMITS_JSON_ARRAY_SERIALIZED: ${{ toJSON(inputs.commits) }}
       run: |
         # Get Commits from Input
-        COMMITS=$(echo ${{ toJSON(inputs.commits) }} | jq -rc .)
+        COMMITS=$(echo "${COMMITS_JSON_ARRAY_SERIALIZED}" | jq -rc .)
 
         # Group Commits into Categories: {category: str, commits: str[]}[]
         echo $COMMITS | jq -r --argjson categories "${CATEGORIES}" '
