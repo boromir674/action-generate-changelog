@@ -20,7 +20,7 @@ jobs:
     if: vars.OVERRIDE_UNIT_TESTS == 'true' || vars.OVERRIDE_UNIT_TESTS != 'false'
     uses: ./.github/workflows/_test.yml
     with:
-      test_matrix: |
+      test_matrix: >
         {
           "test_data": [
             {

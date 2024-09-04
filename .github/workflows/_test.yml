@@ -90,16 +90,17 @@ jobs:
         # ASSERT MARKDOWN Content with Unicode string comparison
         if: always() && matrix.test_data.action_inputs.output_format == 'MD'
         env:
-          # implicit convertion to string, by serializing inner json array representation
-          EXPECTED_COMMITS_GROUPS: ${{ toJSON(matrix.test_data.expected_groups) }}
-          ACTION_COMMITS_GROUPS: ${{ matrix.test_data.action_inputs.output_format == 'MD' && format('"{0}"', steps.run_action.outputs.content) || toJSON(steps.run_action.outputs.content) }}
+          ACTION_COMMITS_GROUPS: ${{ matrix.test_data.action_inputs.output_format == 'MD' && format('"{0}"', steps.run_action.outputs.content) }}
         run: |
-          if [ ${{ env.ACTION_COMMITS_GROUPS }} = ${{ matrix.test_data.action_inputs.output_format == 'MD' && format('"{0}"', env.EXPECTED_MARKDOWN_CONTENT) || toJSON(env.EXPECTED_COMMITS_GROUPS) }} ]; then
+
+          if [ ${{ env.ACTION_COMMITS_GROUPS }} = ${{ format('"{0}"', env.EXPECTED_MARKDOWN_CONTENT) }} ]; then
             echo "Action Return Value is as expected."
           else
             echo "Action Return Value is NOT as expected."
             exit 1
           fi
+
+      # if [ ${{ env.ACTION_COMMITS_GROUPS }} = ${{ matrix.test_data.action_inputs.output_format == 'MD' && format('"{0}"', env.EXPECTED_MARKDOWN_CONTENT) || toJSON(env.EXPECTED_COMMITS_GROUPS) }} ]; then
 
       - name: Print Runtime and Expected for sanity check
         if: always()
