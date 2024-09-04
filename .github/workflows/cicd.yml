@@ -27,10 +27,11 @@ jobs:
               "name": "Test expected Markdown is returned, when Categories are supplied as Action Input",
               "action_inputs": {
                 "commits": [
-                  "feat: new feature",
+                  "feat: new feature 2",
                   "fix: bug fix",
                   "refactor: code refactor",
                   "test: test",
+                  "feat: new feature 1",
                   "build: build",
                   "docs: docs",
                   "ci: ci",
@@ -45,7 +46,8 @@ jobs:
                   "category": "feat",
                   "markdown_section_name": "feat",
                   "commits": [
-                    "feat: new feature"
+                    "feat: new feature 2",
+                    "feat: new feature 1"
                   ]
                 },
                 {
