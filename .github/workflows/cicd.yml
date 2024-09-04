@@ -12,14 +12,7 @@ on:
 env:
   ##### JOB ON/OFF SWITCHES - Top/1st level overrides #####
   RUN_UNIT_TESTS: "true"
-  DOCS_ON: "true"
   ###############################
-
-  #### DOCS Build/Test ####
-  ALWAYS_DOCS: "false"
-  DOCS_JOB_POLICY: '2'  # {2, 3}
-  DOCS_BUILDER_RUNTIME: "3.10"
-  ##########################
 
 jobs:
   ### TEST Action returns 'true' in Rule-passing End-2-End Scenarios ###
@@ -116,28 +109,12 @@ jobs:
           ]
         }
 
-  ### DOCS BUILD/TEST - DOCUMENTATION SITE ###
-  docs:
-    # IF PIPE_DOCS_POLICY != 0, will trigger by processing rules in order till TRUE
-    # - run_policy == 1
-    # - push event on 'main' branch AND run_policy == 2
-    # - push event of "v*" tag AND run_policy == 2
-    # - Documentation Changes Detected
-    name: Build Documentation
-    uses: boromir674/automated-workflows/.github/workflows/policy_docs.yml@v1.13.1
-    with:
-      # 0: OFF, 1: Always, 2: Content Dynamic + Dedicated Branches, 3: Content Dynamic
-      run_policy: "${{ (vars.OVERRIDE_DOCS == 'false' && '0') || (vars.OVERRIDE_DOCS == 'true' && '1') || '2' }}"
-      python_version: '3.10'
-      dedicated_branches: 'main, release'  #  only relevant when policy = 2
-      command: 'tox -s false -e pin-deps -- -E docs && tox -e docs --sitepackages -vv -s false'
-
   ### CI Checks - Quality Logic Gate ###
   quality_gate:
     # This Workflow implements both CI and CD, with its Jobs.
     # So we put the Quality Gate for Dynamic Acceptance/Check here, which should be wired up to the CI Jobs.
     if: always()
-    needs: ['test', 'docs']
+    needs: ['test']
     uses: boromir674/automated-workflows/.github/workflows/go-single-status.yml@v1.13.1
     with:
       # leverage inputs to dynamically control the Acceptance Criteria
