@@ -77,8 +77,6 @@ jobs:
           echo "${EXPECTED_MARKDOWN_CONTENT}" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-          # echo EXPECTED_MARKDOWN_CONTENT="${EXPECTED_MARKDOWN_CONTENT}" >> $GITHUB_ENV
-
       # THEN the Action should return the expected Markdown content
       # jq --exit-status --argjson expected "${EXPECTED_COMMITS_GROUPS}" '$expected == .' <<< ${{ toJSON(steps.run_action.outputs.conten) }}
       
@@ -87,7 +85,7 @@ jobs:
           # implicit convertion to string, by serializing inner json array representation
           EXPECTED_COMMITS_GROUPS: ${{ toJSON(matrix.test_data.expected_groups) }}
         run: |
-          if [ "${{ steps.run_action.outputs.content }}" = "${EXPECTED_MARKDOWN_CONTENT}" ]; then
+          if [ "${{ steps.run_action.outputs.content }}" = "${{ matrix.test_data.action_inputs.output_format == 'MD' && env.EXPECTED_MARKDOWN_CONTENT || env.EXPECTED_COMMITS_GROUPS }}" ]; then
             echo "Action Return Value is as expected."
           else
             echo "Action Return Value is NOT as expected."
