@@ -50,63 +50,63 @@ jobs:
               "expected_groups": [
                 {
                   "category": "feat",
-                  "markdown_section_name": "Feature",
+                  "markdown_section_name": "feat",
                   "commits": [
                     "feat: new feature"
                   ]
                 },
                 {
                   "category": "fix",
-                  "markdown_section_name": "Fix",
+                  "markdown_section_name": "fix",
                   "commits": [
                     "fix: bug fix"
                   ]
                 },
                 {
                   "category": "refactor",
-                  "markdown_section_name": "Refactor",
+                  "markdown_section_name": "refactor",
                   "commits": [
                     "refactor: code refactor"
                   ]
                 },
                 {
                   "category": "test",
-                  "markdown_section_name": "Test",
+                  "markdown_section_name": "test",
                   "commits": [
                     "test: test"
                   ]
                 },
                 {
                   "category": "build",
-                  "markdown_section_name": "Build",
+                  "markdown_section_name": "build",
                   "commits": [
                     "build: build"
                   ]
                 },
                 {
                   "category": "docs",
-                  "markdown_section_name": "Documentation",
+                  "markdown_section_name": "docs",
                   "commits": [
                     "docs: docs"
                   ]
                 },
                 {
                   "category": "ci",
-                  "markdown_section_name": "CI",
+                  "markdown_section_name": "ci",
                   "commits": [
                     "ci: ci"
                   ]
                 },
                 {
                   "category": "style",
-                  "markdown_section_name": "Style",
+                  "markdown_section_name": "style",
                   "commits": [
                     "style: style"
                   ]
                 },
                 {
                   "category": "chore",
-                  "markdown_section_name": "Other",
+                  "markdown_section_name": "chore",
                   "commits": [
                     "chore: chore"
                   ]

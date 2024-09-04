@@ -23,7 +23,7 @@ outputs:
   content:
     description: >
       Either MD Sections, each with a list, or JSON array of Objects
-    value: ${{ steps.set_output.outputs.content }}
+    value: ${{ inputs.output_format == 'MD' && steps.to_markdown.outputs.content || steps.to_json.outputs.content }}
 
 runs:
   using: "composite"
@@ -65,6 +65,7 @@ runs:
 
     # GROUP Commits into Categories JSON Array of Objects {category: str, commits: str[]}
     - name: Groups Commits into Categories JSON Array
+      id: to_json
       env:
         # Get Categories from User (file or action input) or Default
         CATEGORIES: ${{ steps.set_categories.output.INPUT_CATEGORIES || '["feat","fix","refactor","test","build","docs","ci","style","chore"]' }}
@@ -105,11 +106,13 @@ runs:
         echo "[DEBUG] GROUPED_COMMITS: $GROUPED_COMMITS"
 
         echo GROUPED_COMMITS="${GROUPED_COMMITS}" >> $GITHUB_ENV
+        echo content="${GROUPED_COMMITS}" >> $GITHUB_OUTPUT
       shell: bash
 
     # CONVERT to Markdown, if requested
     - name: Convert to Markdown, if '${{ inputs.output_format }}' == 'MD'
       if: ${{ inputs.output_format == 'MD' }}
+      id: to_markdown
       # Convert to Markdown like
       # ## Section Name
       # - commit 1
@@ -123,18 +126,19 @@ runs:
           (.commits | map("- " + .) | join("\n")) + 
           "\n"
         '
-        echo GROUPED_COMMITS=$(echo "$GROUPED_COMMITS" | jq -r '
+        GROUPED_COMMITS=$(echo "$GROUPED_COMMITS" | jq -r '
           .[] |
           select(.commits | length > 0) |  # Only select categories with non-empty commits
           "## \(.category)\n" + 
           (.commits | map("- " + .) | join("\n")) + 
           "\n"
-        ') >> $GITHUB_ENV
-      shell: bash
+        ')
 
-    - name: Set Output
-      id: set_output
-      run: echo content="${GROUPED_COMMITS}" >> $GITHUB_OUTPUT
+        ## Take care of multi-line Markdown content
+        echo "content<<EOF" >> $GITHUB_OUTPUT
+        echo "${GROUPED_COMMITS}" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
       shell: bash
 
 branding:
