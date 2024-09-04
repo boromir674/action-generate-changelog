@@ -69,7 +69,7 @@ runs:
         COMMITS_JSON_ARRAY_SERIALIZED: ${{ toJSON(inputs.commits) }}
       run: |
         # Get Commits from Input
-        COMMITS=$(echo ${{ inputs.commits }} | jq -rc .)
+        COMMITS=$(echo ${{ toJSON(inputs.commits) }} | jq -rc .)
 
         # Group Commits into Categories: {category: str, commits: str[]}[]
         echo $COMMITS | jq -r --argjson categories "${CATEGORIES}" '
