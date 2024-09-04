@@ -24,7 +24,7 @@ jobs:
         {
           "test_data": [
             {
-              "name": "Test expected Markdown is returned, when Categories are supplied as Action Input",
+              "name": "Test 1 expected Markdown is returned, when Categories are supplied as Action Input",
               "action_inputs": {
                 "commits": [
                   "feat: new feature 2",
@@ -104,6 +104,53 @@ jobs:
                   "markdown_section_name": "chore",
                   "commits": [
                     "chore: chore"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Test 2 expected JSON is returned, when Categories are supplied as Action Input",
+              "action_inputs": {
+                "commits": [
+                  "feat: new feature 2",
+                  "fix: bug fix",
+                  "test: test 2",
+                  "test: test 1",
+                  "feat: new feature 1",
+                  "chore: chore 1"
+                ],
+                "output_format": "JSON",
+                "categories": "feat,fix,refactor,test,build,docs,ci,style,chore"
+              },
+              "expected_groups": [
+                {
+                  "category": "feat",
+                  "markdown_section_name": "feat",
+                  "commits": [
+                    "feat: new feature 2",
+                    "feat: new feature 1"
+                  ]
+                },
+                {
+                  "category": "fix",
+                  "markdown_section_name": "fix",
+                  "commits": [
+                    "fix: bug fix"
+                  ]
+                },
+                {
+                  "category": "test",
+                  "markdown_section_name": "test",
+                  "commits": [
+                    "test: test 2",
+                    "test: test 1"
+                  ]
+                },
+                {
+                  "category": "chore",
+                  "markdown_section_name": "chore",
+                  "commits": [
+                    "chore: chore 1"
                   ]
                 }
               ]

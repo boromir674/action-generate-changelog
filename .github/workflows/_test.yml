@@ -77,15 +77,24 @@ jobs:
           echo "${EXPECTED_MARKDOWN_CONTENT}" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      # THEN the Action should return the expected Markdown content
-      # jq --exit-status --argjson expected "${EXPECTED_COMMITS_GROUPS}" '$expected == .' <<< ${{ toJSON(steps.run_action.outputs.conten) }}
-      
-      - name: ASSERT Expected Markdown is returned
+      # THEN the Action should return the expected content
+
+      - name: ASSERT Action JSON array is same as EXPECTED, using jq
+        # ASSERT JSON Content leveraging JQ to disregard space characters and/or \n
+        if: ${{ matrix.test_data.action_inputs.output_format == 'JSON' }}
+        # env:
+        #   ACTION_COMMITS_GROUPS: ${{ toJSON(steps.run_action.outputs.content) }}
+        run: jq --exit-status --argjson expected "${EXPECTED_COMMITS_GROUPS}" '$expected == .' <<< ${{ toJSON(steps.run_action.outputs.content) }}
+
+      - name: ASSERT Expected Content is returned, using Unicode string comparison
+        # ASSERT MARKDOWN Content with Unicode string comparison
+        if: always() && matrix.test_data.action_inputs.output_format == 'MD'
         env:
           # implicit convertion to string, by serializing inner json array representation
           EXPECTED_COMMITS_GROUPS: ${{ toJSON(matrix.test_data.expected_groups) }}
+          ACTION_COMMITS_GROUPS: ${{ matrix.test_data.action_inputs.output_format == 'MD' && format('"{0}"', steps.run_action.outputs.content) || toJSON(steps.run_action.outputs.content) }}
         run: |
-          if [ "${{ steps.run_action.outputs.content }}" = "${{ matrix.test_data.action_inputs.output_format == 'MD' && env.EXPECTED_MARKDOWN_CONTENT || env.EXPECTED_COMMITS_GROUPS }}" ]; then
+          if [ ${{ env.ACTION_COMMITS_GROUPS }} = ${{ matrix.test_data.action_inputs.output_format == 'MD' && format('"{0}"', env.EXPECTED_MARKDOWN_CONTENT) || toJSON(env.EXPECTED_COMMITS_GROUPS) }} ]; then
             echo "Action Return Value is as expected."
           else
             echo "Action Return Value is NOT as expected."
