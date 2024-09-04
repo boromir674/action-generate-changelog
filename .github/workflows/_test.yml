@@ -101,3 +101,11 @@ jobs:
 
           echo "[DEBUG] Expected Output:"
           echo "${{ matrix.test_data.action_inputs.output_format == 'MD' && env.EXPECTED_MARKDOWN_CONTENT || env.EXPECTED_COMMITS_GROUPS }}"
+
+      - name: Render Returned Content as Job Summary
+        if: always()
+        run: |
+          echo "### Action Return Value" >> $GITHUB_STEP_SUMMARY
+          echo '```${{ matrix.test_data.action_inputs.output_format == 'JSON' && 'json' }}' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.run_action.outputs.content }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
