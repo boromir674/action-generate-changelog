@@ -117,5 +117,5 @@ jobs:
         run: |
           echo "### Action Return Value" >> $GITHUB_STEP_SUMMARY
           echo '```${{ matrix.test_data.action_inputs.output_format == 'JSON' && 'json' || 'markdown' }}' >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.run_action.outputs.content }}" >> $GITHUB_STEP_SUMMARY
+          echo ${{ matrix.test_data.action_inputs.output_format == 'JSON' && format('{0} | jq', toJSON(steps.run_action.outputs.content)) || format('"{0}"', steps.run_action.outputs.content) }} >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
