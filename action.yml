@@ -80,7 +80,7 @@ runs:
             category: .,
             commits: $coms
           })
-        ' | jq '[.[] | . as $obj | .commits |= map(select(startswith($obj.category + ":"))) | select(.commits | length > 0)]'
+        ' | jq -c '[.[] | . as $obj | .commits |= map(select(startswith($obj.category + ":"))) | select(.commits | length > 0)]'
 
         echo GROUPED_COMMITS=$(echo $COMMITS | jq -r --argjson categories "${CATEGORIES}" '
           . as $coms |
@@ -89,7 +89,7 @@ runs:
             category: .,
             commits: $coms
           })
-        ' | jq -c '[.[] | . as $obj | .commits |= map(select(startswith($obj.category + ":"))) | select(.commits | length > 0)]')
+        ' | jq -c '[.[] | . as $obj | .commits |= map(select(startswith($obj.category + ":")) | sub("^" + $obj.category + ": "; "")) | select(.commits | length > 0)]')
 
         GROUPED_COMMITS=$(echo $COMMITS | jq -r --argjson categories "${CATEGORIES}" '
           . as $coms |
@@ -98,7 +98,7 @@ runs:
             category: .,
             commits: $coms
           })
-        ' | jq -c '[.[] | . as $obj | .commits |= map(select(startswith($obj.category + ":"))) | select(.commits | length > 0)]')
+        ' | jq -c '[.[] | . as $obj | .commits |= map(select(startswith($obj.category + ":")) | sub("^" + $obj.category + ": "; "")) | select(.commits | length > 0)]')
 
         echo "[DEBUG] GROUPED_COMMITS: $GROUPED_COMMITS"
 
