@@ -4,10 +4,9 @@
 
 [![GitHub branch status](https://img.shields.io/github/checks-status/boromir674/action-generate-changelog/main?label=CI%2FCD)](https://github.com/boromir674/action-generate-changelog/actions/workflows/cicd.yml)
 ![GitHub Tag](https://img.shields.io/github/v/tag/boromir674/action-generate-changelog?sort=semver)
-![GitHub Release](https://img.shields.io/github/v/release/boromir674/action-generate-changelog?sort=semver&color=blue&link=https%3A%2F%2Fgithub.com%2Fboromir674%2Faction-generate-changelog%2Freleases%2Ftag%2Fv0.1.0)
-[![License](https://img.shields.io/github/license/boromir674/action-generate-changelog)](https://github.com/boromir674/action-generate-changelog/blob/main/LICENSE)
-[![GitHub commits since tagged version (branch)](https://img.shields.io/github/commits-since/boromir674/action-generate-changelog/v0.1.0/main?color=blue&logo=github)](https://github.com/boromir674/action-generate-changelog/compare/v0.1.0..main)
+![GitHub Release](https://img.shields.io/github/v/release/boromir674/action-generate-changelog?sort=semver&color=blue)
 ![GitHub commits since latest release (by SemVer)](https://img.shields.io/github/commits-since/boromir674/action-generate-changelog/latest?color=blue&logo=semver&sort=semver)
+[![License](https://img.shields.io/github/license/boromir674/action-generate-changelog)](https://github.com/boromir674/action-generate-changelog/blob/main/LICENSE)
 
 
 
@@ -79,6 +78,9 @@ if_format_is_md_2 -- YES --> gen_output_md_sections
 ```
 
 ## Features
+- reads `commits` encoded as JSON Array
+- supports `Markdown` or `JSON` **Output**
+- parsing `Conventional Commits` or configure your own `Categories`
 
 ## Inputs
 
