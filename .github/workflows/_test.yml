@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJSON(inputs.test_matrix) }}
+      fail-fast: false  # allow Test Cases to continue running when another one fails
     env:
       TEST_MAIN: main
       TEST_REPO: 'boromir674/gitops-automation'
