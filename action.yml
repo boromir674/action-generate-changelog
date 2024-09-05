@@ -1,0 +1,144 @@
+name: 'Commit Groups Generator'
+author: Konstantinos Lampridis
+description: "Group Commits into Categories and output in MD or JSON format."
+
+inputs:
+  commits:
+    description: >
+      Commit Subjects as JSON array of strings.
+    required: true
+  output_format:
+    description: >
+      The format, 'MD' (for Markdown) or 'JSON', to use for the Action Output
+    required: false
+    default: 'MD'
+  categories:
+    description: >
+      Comma-separated Categories to use for grouping the Commits.
+      Example: 'feat,fix,refactor,test,build,docs,ci,style,chore'.
+    required: false
+
+outputs:
+  # Outputs are Unicode strings, and can be a maximum of 1 MB. The total of all outputs in a workflow run can be a maximum of 50 MB.
+  content:
+    description: >
+      Either MD Sections, each with a list, or JSON array of Objects
+    value: ${{ inputs.output_format == 'MD' && steps.to_markdown.outputs.content || steps.to_json.outputs.content }}
+
+runs:
+  using: "composite"
+  steps:
+    # VERIFY INPUTS: commits is jq-parsable JSON array of strings
+    - name: "VERIFY INPUTS: commits is jq-parsable JSON array of strings"
+      env:
+        COMMITS_JSON_ARRAY_SERIALIZED: ${{ toJSON(inputs.commits) }}
+      run: |
+        if ! jq -e . <<< "${COMMITS_JSON_ARRAY_SERIALIZED}" >/dev/null 2>&1; then
+          echo "[ERROR] Input 'commits' is not a valid JSON array of strings."
+          echo "Exiting with error."
+          exit 1
+        fi
+      shell: bash
+
+    # VERIFY INPUTS: format is either 'MD' or 'JSON'
+    - name: "VERIFY INPUTS: format is either 'MD' or 'JSON'"
+      run: |
+        if [ "${{ inputs.output_format }}" != "MD" ] && [ "${{ inputs.output_format }}" != "JSON" ]; then
+          echo "[ERROR] Input 'output_format' must be either 'MD' or 'JSON'."
+          echo "Exiting with error."
+          exit 1
+        fi
+      shell: bash
+
+    # STORE Categories as JSON Array
+    - if: ${{ inputs.categories }}
+      ## [IF] Categories from INPUTs: feat,test,ci --> ["feat","test","ci" ]
+      name: SET Categories JSON Array of strings, from Input 'categories'
+      id: set_categories
+      run: echo INPUT_CATEGORIES=$(echo ${{ inputs.categories }} | tr ',' '\n' | jq -R . | jq -sc .) >> $GITHUB_OUTPUT
+      shell: bash
+    # - if: ${{ ! inputs.categories }}
+    # TODO
+
+    # GROUP Commits into Categories JSON Array of Objects {category: str, commits: str[]}
+    - name: Groups Commits into Categories JSON Array
+      id: to_json
+      env:
+        # Get Categories from User (file or action input) or Default
+        CATEGORIES: ${{ steps.set_categories.output.INPUT_CATEGORIES || '["feat","fix","refactor","test","build","docs","ci","style","chore"]' }}
+        # implicit convertion to UNICODE string, by serializing inner JSON array representation
+        COMMITS_JSON_ARRAY_SERIALIZED: ${{ toJSON(inputs.commits) }}
+      run: |
+        # Get Commits from Input
+        COMMITS=$(echo "${COMMITS_JSON_ARRAY_SERIALIZED}" | jq -rc .)
+
+        # Group Commits into Categories: {category: str, commits: str[]}[]
+        echo $COMMITS | jq -r --argjson categories "${CATEGORIES}" '
+          . as $coms |
+          $categories |
+          map({
+            category: .,
+            commits: $coms
+          })
+        ' | jq -c '[.[] | . as $obj | .commits |= map(select(startswith($obj.category + ":"))) | select(.commits | length > 0)]'
+
+        echo GROUPED_COMMITS=$(echo $COMMITS | jq -r --argjson categories "${CATEGORIES}" '
+          . as $coms |
+          $categories |
+          map({
+            category: .,
+            commits: $coms
+          })
+        ' | jq -c '[.[] | . as $obj | .commits |= map(select(startswith($obj.category + ":")) | sub("^" + $obj.category + ": "; "")) | select(.commits | length > 0)]')
+
+        GROUPED_COMMITS=$(echo $COMMITS | jq -r --argjson categories "${CATEGORIES}" '
+          . as $coms |
+          $categories |
+          map({
+            category: .,
+            commits: $coms
+          })
+        ' | jq -c '[.[] | . as $obj | .commits |= map(select(startswith($obj.category + ":")) | sub("^" + $obj.category + ": "; "")) | select(.commits | length > 0)]')
+
+        echo "[DEBUG] GROUPED_COMMITS: $GROUPED_COMMITS"
+
+        echo GROUPED_COMMITS="${GROUPED_COMMITS}" >> $GITHUB_ENV
+        echo content="${GROUPED_COMMITS}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    # CONVERT to Markdown, if requested
+    - name: Convert to Markdown, if '${{ inputs.output_format }}' == 'MD'
+      if: ${{ inputs.output_format == 'MD' }}
+      id: to_markdown
+      # Convert to Markdown like
+      # ## Section Name
+      # - commit 1
+      # - commit 2
+      # ...
+      run: |
+        echo "$GROUPED_COMMITS" | jq -r '
+          .[] |
+          select(.commits | length > 0) |  # Only select categories with non-empty commits
+          "## \(.category)\n" + 
+          (.commits | map("- " + .) | join("\n")) + 
+          "\n"
+        '
+        GROUPED_COMMITS=$(echo "$GROUPED_COMMITS" | jq -r '
+          .[] |
+          select(.commits | length > 0) |  # Only select categories with non-empty commits
+          "## \(.category)\n" + 
+          (.commits | map("- " + .) | join("\n")) + 
+          "\n"
+        ')
+
+        ## Take care of multi-line Markdown content
+        echo "content<<EOF" >> $GITHUB_OUTPUT
+        echo "${GROUPED_COMMITS}" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+      shell: bash
+
+branding:
+  icon: hash  # https://feathericons.com/
+  color: 'blue'  # background color of the badge
+  # white, black, yellow, blue, green, orange, red, purple, gray-dark
