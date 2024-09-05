@@ -168,7 +168,6 @@ jobs:
               "expected_groups": [
                 {
                   "category": "feat",
-                  "markdown_section_name": "feat",
                   "commits": [
                     "feat: new feature 2",
                     "feat: new feature 1"
