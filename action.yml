@@ -27,9 +27,6 @@ outputs:
 
 runs:
   using: "composite"
-  env:
-    # implicit convertion to UNICODE string, by serializing inner JSON array representation
-    COMMITS_JSON_ARRAY_SERIALIZED: ${{ toJSON(inputs.commits) }}
   steps:
     # VERIFY INPUTS: commits is jq-parsable JSON array of strings
     - name: "VERIFY INPUTS: commits is jq-parsable JSON array of strings"
