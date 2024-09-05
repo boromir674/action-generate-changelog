@@ -125,7 +125,6 @@ jobs:
               "expected_groups": [
                 {
                   "category": "feat",
-                  "markdown_section_name": "feat",
                   "commits": [
                     "feat: new feature 2",
                     "feat: new feature 1"
@@ -133,14 +132,12 @@ jobs:
                 },
                 {
                   "category": "fix",
-                  "markdown_section_name": "fix",
                   "commits": [
                     "fix: bug fix"
                   ]
                 },
                 {
                   "category": "test",
-                  "markdown_section_name": "test",
                   "commits": [
                     "test: test 2",
                     "test: test 1"
@@ -148,7 +145,6 @@ jobs:
                 },
                 {
                   "category": "chore",
-                  "markdown_section_name": "chore",
                   "commits": [
                     "chore: chore 1"
                   ]
