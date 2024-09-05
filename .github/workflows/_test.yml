@@ -27,7 +27,7 @@ jobs:
           echo 'Commits: ${{ toJSON(matrix.test_data.action_inputs.commits) }}'
           echo 'Format: ${{ matrix.test_data.action_inputs.output_format }}'
           echo 'Categories: ${{ matrix.test_data.action_inputs.categories }}'
-          echo 'Expected Groups: ${{ matrix.test_data.expected_groups }}'
+          echo 'Expected Groups: ${{ toJSON(matrix.test_data.expected_groups) }}'
 
       # GIVEN a git repository locally checked out
       - name: Checkout '${{ env.TEST_REPO }}' Compatible Repository
@@ -41,6 +41,7 @@ jobs:
         # GIVEN a the requested output_format is 'MD'. for Markdown
         # GIVEN the User requested to get grouped output
         # GIVEN the User supply their Categories as Action Input
+
       # WHEN the Action runs
       - name: WHEN Action Runs, with Categories supplied as Input
         id: run_action
@@ -78,7 +79,6 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       # THEN the Action should return the expected content
-
       - name: ASSERT Action JSON array is same as EXPECTED, using jq
         # ASSERT JSON Content leveraging JQ to disregard space characters and/or \n
         if: ${{ matrix.test_data.action_inputs.output_format == 'JSON' }}
@@ -99,8 +99,6 @@ jobs:
             echo "Action Return Value is NOT as expected."
             exit 1
           fi
-
-      # if [ ${{ env.ACTION_COMMITS_GROUPS }} = ${{ matrix.test_data.action_inputs.output_format == 'MD' && format('"{0}"', env.EXPECTED_MARKDOWN_CONTENT) || toJSON(env.EXPECTED_COMMITS_GROUPS) }} ]; then
 
       - name: Print Runtime and Expected for sanity check
         if: always()
