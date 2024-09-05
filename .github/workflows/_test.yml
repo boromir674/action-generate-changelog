@@ -116,6 +116,6 @@ jobs:
         if: always()
         run: |
           echo "### Action Return Value" >> $GITHUB_STEP_SUMMARY
-          echo '```${{ matrix.test_data.action_inputs.output_format == 'JSON' && 'json' }}' >> $GITHUB_STEP_SUMMARY
+          echo '```${{ matrix.test_data.action_inputs.output_format == 'JSON' && 'json' || 'markdown' }}' >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.run_action.outputs.content }}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY

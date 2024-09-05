@@ -154,6 +154,27 @@ jobs:
                   ]
                 }
               ]
+            },
+            {
+              "name": "Test 3 expected JSON is returned, when Categories are supplied as Action Input",
+              "action_inputs": {
+                "commits": [
+                  "feat: new feature 2",
+                  "feat: new feature 1"
+                ],
+                "output_format": "JSON",
+                "categories": "feat,fix,refactor,test,build,docs,ci,style,chore"
+              },
+              "expected_groups": [
+                {
+                  "category": "feat",
+                  "markdown_section_name": "feat",
+                  "commits": [
+                    "feat: new feature 2",
+                    "feat: new feature 1"
+                  ]
+                }
+              ]
             }
           ]
         }
