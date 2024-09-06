@@ -119,14 +119,14 @@ runs:
         echo "$GROUPED_COMMITS" | jq -r '
           .[] |
           select(.commits | length > 0) |  # Only select categories with non-empty commits
-          "## \(.category)\n" + 
+          "#### \(.category)\n" + 
           (.commits | map("- " + .) | join("\n")) + 
           "\n"
         '
         GROUPED_COMMITS=$(echo "$GROUPED_COMMITS" | jq -r '
           .[] |
           select(.commits | length > 0) |  # Only select categories with non-empty commits
-          "## \(.category)\n" + 
+          "#### \(.category)\n" + 
           (.commits | map("- " + .) | join("\n")) + 
           "\n"
         ')

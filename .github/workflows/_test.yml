@@ -67,9 +67,9 @@ jobs:
           # - commit 1
           # - commit 2
           # ...
-          # EXPECTED_MARKDOWN_CONTENT=$(echo "${expected_content}" | jq -r 'map("## \(.markdown_section_name)\n\(.commits | map("- \(.)) | join("\n")) | join("\n\n")')
+          # EXPECTED_MARKDOWN_CONTENT=$(echo "${expected_content}" | jq -r 'map("#### \(.markdown_section_name)\n\(.commits | map("- \(.)) | join("\n")) | join("\n\n")')
 
-          EXPECTED_MARKDOWN_CONTENT=$(echo "${expected_content}" | jq -r 'map("## \(.markdown_section_name)\n\(.commits | map("- \(.)") | join("\n"))") | join("\n\n")')
+          EXPECTED_MARKDOWN_CONTENT=$(echo "${expected_content}" | jq -r 'map("#### \(.markdown_section_name)\n\(.commits | map("- \(.)") | join("\n"))") | join("\n\n")')
 
           echo "[DEBUG] EXPECTED_MARKDOWN_CONTENT:"
           echo ${EXPECTED_MARKDOWN_CONTENT}
