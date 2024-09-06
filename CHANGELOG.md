@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 2.0.0 (2024-09-06)
+
+### Changes
+
+#### Feature
+- generate Commit Categories Markdown by default at level 4 Heading
+
+#### Test
+- verify that Action returns Commit Category Heading at level 4 by default
+
+
 ## 1.0.0 (2024-08-24)
 
 ### Changes
